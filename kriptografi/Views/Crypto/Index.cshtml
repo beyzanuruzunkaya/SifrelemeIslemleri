@@ -1,0 +1,758 @@
+@model kriptografi.Models.CryptoModel
+
+@{
+    ViewData["Title"] = "Kriptografi İşlemleri";
+}
+
+<div class="crypto-container">
+    <div class="header-section">
+        <div class="matrix-title">
+            <h1 class="main-title">
+                <i class="fas fa-shield-alt"></i>
+                Kriptografi İşlemleri
+            </h1>
+            <p class="subtitle">RSA, AES Şifreleme ve SHA256 Özet Fonksiyonları ile Güvenli Veri İşleme Platformu</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.OutputText))
+    {
+        <div class="result-section">
+            <div class="result-header">
+                <i class="fas fa-check-circle"></i>
+                <span>İşlem Başarıyla Tamamlandı</span>
+            </div>
+            <div class="result-content">
+                <pre><code>@Model.OutputText</code></pre>
+                <button class="copy-btn" onclick="copyResult()">
+                    <i class="fas fa-copy"></i>
+                    <span>Kopyala</span>
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="operation-card">
+        <form asp-action="Process" method="post" enctype="multipart/form-data" id="cryptoForm">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error-section">
+                    <div asp-validation-summary="All" class="validation-summary"></div>
+                </div>
+            }
+
+            <div class="key-generation-section">
+                <div class="key-type-section">
+                    <label class="key-type-label">
+                        <i class="fas fa-key"></i>
+                        RSA Anahtar Yönetimi
+                    </label>
+                    <label class="switch-container">
+                        <input type="checkbox" asp-for="GenerateNewKeys" id="generateRsaKeys" class="switch-input">
+                        <span class="switch-slider">
+                            <i class="fas fa-key"></i>
+                        </span>
+                        <span class="switch-label">Yeni RSA Anahtar Çifti Oluştur</span>
+                    </label>
+                </div>
+
+                <div class="key-type-section">
+                    <label class="key-type-label">
+                        <i class="fas fa-lock"></i>
+                        AES Anahtar Yönetimi
+                    </label>
+                    <label class="switch-container">
+                        <input type="checkbox" asp-for="GenerateAesKey" id="generateAesKey" class="switch-input">
+                        <span class="switch-slider">
+                            <i class="fas fa-key"></i>
+                        </span>
+                        <span class="switch-label">Yeni AES Anahtarı Oluştur</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="operationSection">
+                <div class="operation-buttons">
+                    <input type="radio" id="encrypt" name="SelectedOperation" value="encrypt" class="operation-radio" hidden>
+                    <label for="encrypt" class="operation-btn">
+                        <i class="fas fa-lock"></i>
+                        <span>RSA Şifreleme</span>
+                    </label>
+
+                    <input type="radio" id="decrypt" name="SelectedOperation" value="decrypt" class="operation-radio" hidden>
+                    <label for="decrypt" class="operation-btn">
+                        <i class="fas fa-unlock"></i>
+                        <span>RSA Şifre Çözme</span>
+                    </label>
+
+                    <input type="radio" id="aes-encrypt" name="SelectedOperation" value="aes-encrypt" class="operation-radio" hidden>
+                    <label for="aes-encrypt" class="operation-btn">
+                        <i class="fas fa-user-lock"></i>
+                        <span>AES Şifreleme</span>
+                    </label>
+
+                    <input type="radio" id="aes-decrypt" name="SelectedOperation" value="aes-decrypt" class="operation-radio" hidden>
+                    <label for="aes-decrypt" class="operation-btn">
+                        <i class="fas fa-unlock-keyhole"></i>
+                        <span>AES Şifre Çözme</span>
+                    </label>
+
+                    <input type="radio" id="sha256text" name="SelectedOperation" value="sha256text" class="operation-radio" hidden>
+                    <label for="sha256text" class="operation-btn">
+                        <i class="fas fa-file-alt"></i>
+                        <span>SHA256 (Metin)</span>
+                    </label>
+
+                    <input type="radio" id="sha256file" name="SelectedOperation" value="sha256file" class="operation-radio" hidden>
+                    <label for="sha256file" class="operation-btn">
+                        <i class="fas fa-file"></i>
+                        <span>SHA256 (Dosya)</span>
+                    </label>
+                </div>
+
+                <div id="inputTextSection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-keyboard"></i>
+                            Giriş Metni
+                        </label>
+                        <textarea asp-for="InputText" class="material-input" 
+                            placeholder="İşlem yapılacak metni buraya girin..."></textarea>
+                    </div>
+                </div>
+
+                <div id="publicKeySection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-key"></i>
+                            Public Key
+                        </label>
+                        <textarea asp-for="PublicKey" class="material-input" 
+                            placeholder="Public Key'i buraya yapıştırın..."></textarea>
+                    </div>
+                </div>
+
+                <div id="privateKeySection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-key"></i>
+                            Private Key
+                        </label>
+                        <textarea asp-for="PrivateKey" class="material-input" 
+                            placeholder="Private Key'i buraya yapıştırın..."></textarea>
+                    </div>
+                </div>
+
+                <div id="aesKeySection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-key"></i>
+                            AES Key
+                        </label>
+                        <textarea asp-for="AesKey" class="material-input" 
+                            placeholder="AES Key'i buraya yapıştırın..."></textarea>
+                    </div>
+                </div>
+
+                <div id="aesIVSection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-vector-square"></i>
+                            AES IV
+                        </label>
+                        <textarea asp-for="AesIV" class="material-input" 
+                            placeholder="AES IV'yi buraya yapıştırın..."></textarea>
+                    </div>
+                </div>
+
+                <div id="fileSection" class="crypto-input-section" style="display: none;">
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-file"></i>
+                            Dosya Seçin
+                        </label>
+                        <div class="file-upload">
+                            <label class="file-label">
+                                <input type="file" name="InputFile" id="InputFile" class="d-none" />
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Dosya yüklemek için tıklayın veya sürükleyin</span>
+                            </label>
+                            <div id="fileInfo" class="selected-file-info" style="display: none;">
+                                <i class="fas fa-file-alt"></i>
+                                <span id="fileName"></span>
+                                <small id="fileSize" class="ms-2"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-shield-alt"></i>
+                İşlemi Başlat
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function toggleOperationSection() {
+                if ($('#generateRsaKeys').is(':checked') || $('#generateAesKey').is(':checked')) {
+                    $('#operationSection').slideUp(300);
+                } else {
+                    $('#operationSection').slideDown(300);
+                    updateVisibleSections();
+                }
+            }
+
+            $('#generateRsaKeys, #generateAesKey').change(function() {
+                var $this = $(this);
+                if ($this.is(':checked')) {
+                    if ($this.attr('id') === 'generateRsaKeys') {
+                        $('#generateAesKey').prop('checked', false);
+                    } else {
+                        $('#generateRsaKeys').prop('checked', false);
+                    }
+                }
+                toggleOperationSection();
+            });
+
+            function updateVisibleSections() {
+                var selectedOperation = $('input[name="SelectedOperation"]:checked').val();
+                $('.crypto-input-section').hide();
+
+                switch (selectedOperation) {
+                    case 'encrypt':
+                        $('#inputTextSection, #publicKeySection').slideDown(300);
+                        break;
+                    case 'decrypt':
+                        $('#inputTextSection, #privateKeySection').slideDown(300);
+                        break;
+                    case 'aes-encrypt':
+                    case 'aes-decrypt':
+                        $('#inputTextSection, #aesKeySection, #aesIVSection').slideDown(300);
+                        break;
+                    case 'sha256text':
+                        $('#inputTextSection').slideDown(300);
+                        break;
+                    case 'sha256file':
+                        $('#fileSection').slideDown(300);
+                        break;
+                }
+            }
+
+            $('input[name="SelectedOperation"]').change(updateVisibleSections);
+            toggleOperationSection();
+
+            $('#InputFile').on('change', function() {
+                var file = this.files[0];
+                if (file) {
+                    $('#fileName').text(file.name);
+                    $('#fileSize').text('(' + formatFileSize(file.size) + ')');
+                    $('#fileInfo').slideDown(300);
+                } else {
+                    $('#fileInfo').slideUp(300);
+                }
+            });
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            $('form').on('submit', function(e) {
+                if ($('input[name="SelectedOperation"]:checked').val() === 'sha256file') {
+                    var fileInput = $('#InputFile')[0];
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        e.preventDefault();
+                        showToast('Lütfen bir dosya seçin', 'error');
+                        return false;
+                    }
+
+                    var file = fileInput.files[0];
+                    if (file.size > 100 * 1024 * 1024) {
+                        e.preventDefault();
+                        showToast('Dosya boyutu 100MB\'dan büyük olamaz', 'error');
+                        return false;
+                    }
+                }
+            });
+        });
+
+        function copyResult() {
+            var resultText = document.querySelector('.result-content pre').innerText;
+            navigator.clipboard.writeText(resultText).then(function() {
+                showToast('Sonuç başarıyla kopyalandı!', 'success');
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            var toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(function() {
+                toast.style.animation = 'slideInUp 0.3s ease-out reverse';
+                setTimeout(function() {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
+        }
+    </script>
+}
+
+<style>
+    .crypto-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 4rem;
+        position: relative;
+    }
+
+    .matrix-title {
+        position: relative;
+        padding: 2rem;
+        background: rgba(0, 255, 0, 0.05);
+        border-radius: 16px;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(0, 255, 0, 0.1);
+    }
+
+    .main-title {
+        font-family: var(--font-mono);
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    .main-title i {
+        margin-right: 1rem;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    .operation-card {
+        background: var(--background-light);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        backdrop-filter: blur(8px);
+    }
+
+    .key-generation-section {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(121, 40, 202, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(121, 40, 202, 0.1);
+    }
+
+    .key-type-section {
+        flex: 1;
+        padding: 1.5rem;
+        background: rgba(26, 26, 35, 0.8);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .key-type-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(121, 40, 202, 0.2);
+    }
+
+    .key-type-label {
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .key-type-label i {
+        font-size: 1.4rem;
+        color: var(--primary-color);
+    }
+
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background: rgba(121, 40, 202, 0.1);
+    }
+
+    .switch-container:hover {
+        background: rgba(121, 40, 202, 0.15);
+    }
+
+    .switch-slider {
+        position: relative;
+        width: 52px;
+        height: 28px;
+        background: rgba(121, 40, 202, 0.2);
+        border-radius: 28px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(121, 40, 202, 0.3);
+    }
+
+    .switch-input:checked + .switch-slider {
+        background: var(--primary-color);
+        border-color: var(--primary-dark);
+    }
+
+    .switch-slider i {
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        opacity: 0.7;
+    }
+
+    .switch-input:checked + .switch-slider i {
+        opacity: 1;
+        transform: rotate(360deg);
+    }
+
+    .switch-label {
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .switch-input:checked ~ .switch-label {
+        color: var(--primary-color);
+    }
+
+    .operation-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .operation-btn {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-primary);
+    }
+
+    .operation-btn:hover {
+        background: rgba(0, 255, 0, 0.1);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .operation-btn i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .operation-radio:checked + .operation-btn {
+        background: rgba(0, 255, 0, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+    }
+
+    .crypto-input-section {
+        margin-bottom: 2rem;
+    }
+
+    .input-label {
+        color: var(--primary-color);
+        font-family: var(--font-mono);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .input-label i {
+        margin-right: 0.5rem;
+    }
+
+    .material-input {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        resize: vertical;
+        min-height: 120px;
+        transition: all 0.3s ease;
+    }
+
+    .material-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+    }
+
+    .file-upload {
+        border: 2px dashed rgba(0, 255, 0, 0.2);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload:hover {
+        border-color: var(--primary-color);
+        background: rgba(0, 255, 0, 0.05);
+    }
+
+    .file-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        color: var(--text-primary);
+    }
+
+    .file-label i {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+
+    .selected-file-info {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: rgba(0, 255, 0, 0.05);
+        border-radius: 8px;
+        color: var(--text-primary);
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: var(--primary-color);
+        border: none;
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: var(--background-dark);
+        font-family: var(--font-mono);
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .submit-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 255, 0, 0.2);
+    }
+
+    .result-section {
+        background: rgba(0, 255, 0, 0.05);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        backdrop-filter: blur(8px);
+    }
+
+    .result-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--primary-color);
+        font-family: var(--font-mono);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .result-content {
+        position: relative;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(0, 255, 0, 0.1);
+    }
+
+    .result-content pre {
+        margin: 0;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--primary-color);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: var(--background-dark);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .copy-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: rgba(0, 255, 0, 0.1);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(0, 255, 0, 0.2);
+        border-radius: 8px;
+        padding: 1rem 2rem;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 1000;
+        animation: slideInUp 0.3s ease-out;
+    }
+
+    .toast-error {
+        background: rgba(255, 0, 0, 0.1);
+        border-color: rgba(255, 0, 0, 0.2);
+    }
+
+    .toast i {
+        color: var(--primary-color);
+    }
+
+    .toast-error i {
+        color: var(--danger-color);
+    }
+
+    .error-section {
+        background: rgba(255, 0, 0, 0.1);
+        border: 1px solid rgba(255, 0, 0, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .validation-summary {
+        color: var(--danger-color);
+        font-family: var(--font-mono);
+    }
+
+    .validation-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .validation-summary li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .validation-summary li:before {
+        content: '•';
+        color: var(--danger-color);
+    }
+
+    /* Responsive styles */
+    @@media (max-width: 768px) {
+        .crypto-container {
+            padding: 1rem;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+
+        .key-generation-section {
+            flex-direction: column;
+        }
+
+        .operation-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .copy-btn {
+            position: relative;
+            top: auto;
+            right: auto;
+            width: 100%;
+            margin-top: 1rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .main-title {
+            font-size: 1.75rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+        }
+
+        .operation-btn {
+            padding: 1rem;
+        }
+
+        .material-input {
+            padding: 1rem;
+            min-height: 100px;
+        }
+    }
+</style> 
